@@ -4,6 +4,12 @@
 
 Annotate your route handlers with pydantic models and the body and response are validated automatically.
 
+[![Tests](https://github.com/EmmanuelNiyonshuti/anyquart_pydantic/actions/workflows/tests.yml/badge.svg)](https://github.com/EmmanuelNiyonshuti/anyquart_pydantic/actions)
+[![PyPI](https://img.shields.io/pypi/v/anyquart_pydantic.svg)](https://pypi.org/project/anyquart_pydantic/)
+[![Python](https://img.shields.io/pypi/pyversions/anyquart_pydantic.svg)](https://pypi.org/project/anyquart_pydantic/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![t](https://img.shields.io/badge/status-maintained-yellow.svg)
+
 ## Install
 
 ```bash
