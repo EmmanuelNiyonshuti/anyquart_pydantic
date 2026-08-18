@@ -1,5 +1,5 @@
 [build-system]
-requires = ["flit_core>=3.11,<5"]
+requires = ["flit_core>=4.0.2,<5"]
 build-backend = "flit_core.buildapi"
 
 [project]
@@ -44,7 +44,7 @@ anyquart_pydantic = "anyquart_pydantic.cli:main"
 
 [dependency-groups]
 dev = [
-    "trio==0.33.0",
+    "trio==0.34.0",
     "ruff",
     "tox",
     "tox-uv",
