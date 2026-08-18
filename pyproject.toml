@@ -1,0 +1,170 @@
+[build-system]
+requires = ["flit_core>=3.11,<5"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "anyquart_pydantic"
+version = "0.1.0"
+description = "anyquart extension for data validation and api documentation"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "NIYONSHUTI Emmanuel", email = "emmanuelniyonshuti13@gmail.com" }]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Programming Language :: Python :: Free Threading :: 2 - Beta",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Typing :: Typed",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "anyquart>=0.3.0",
+    "pydantic>=2.13.4,<3",
+]
+
+[project.urls]
+Documentation = "https://github.com/EmmanuelNiyonshuti/anyquart"
+Source = "https://github.com/EmmanuelNiyonshuti/anyquart"
+
+# [project.optional-dependencies]
+
+[project.scripts]
+anyquart_pydantic = "anyquart_pydantic.cli:main"
+
+[dependency-groups]
+dev = [
+    "trio==0.33.0",
+    "ruff",
+    "tox",
+    "tox-uv",
+]
+pre-commit = [
+    "pre-commit",
+    "pre-commit-uv",
+]
+tests = [
+    "hypothesis",
+    "pytest",
+    "pytest-cov",
+]
+typing = [
+    "mypy",
+    "pyright",
+]
+
+[tool.flit.module]
+name = "anyquart_pydantic"
+
+[tool.uv]
+default-groups = ["dev", "pre-commit", "tests", "typing"]
+
+[tool.pytest.ini_options]
+addopts = "--no-cov-on-fail --showlocals --strict-markers"
+testpaths = ["tests"]
+filterwarnings = [
+    "error",
+]
+anyio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["anyquart_pydantic", "tests"]
+
+[tool.coverage.paths]
+source = ["src", "*/site-packages"]
+
+[tool.coverage.report]
+exclude_also = [
+    "if TYPE_CHECKING",
+    "raise NotImplementedError",
+    ": \\.{3}",
+]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+disallow_any_generics = false
+warn_return_any = false
+files = ["src", "tests"]
+
+
+[tool.pyright]
+pythonVersion = "3.10"
+venvPath = "."
+venv = ".venv"
+include = ["src", "tests"]
+typeCheckingMode = "basic"
+
+[tool.ruff]
+src = ["src"]
+fix = true
+show-fixes = true
+output-format = "full"
+
+[tool.ruff.lint]
+select = [
+    "B",  # flake8-bugbear
+    "E",  # pycodestyle error
+    "F",  # pyflakes
+    "FA",  # flake8-future-annotations
+    "I",  # isort
+    "N",  # pep8-naming
+    "UP",  # pyupgrade
+    "W",  # pycodestyle warning
+]
+ignore = [
+    "UP038",  # keep isinstance tuple
+    "UP007",  # Union[] is needed for forward-referenced type aliases
+    "UP045"
+]
+
+[tool.ruff.lint.isort]
+"required-imports" = ["from __future__ import annotations"]
+
+[tool.tox]
+env_list = [
+    "py3.15", "py3.14", "py3.14t", "py3.13", "py3.12", "py3.11", "py3.10",
+    "style",
+    "typing",
+    "docs",
+]
+skip_missing_interpreters = true
+requires = ["tox >= 4.22"]
+
+[tool.tox.env_run_base]
+description = "pytest on latest dependency versions"
+runner = "uv-venv-lock-runner"
+package = "wheel"
+wheel_build_env = ".pkg"
+constrain_package_deps = true
+use_frozen_constraints = true
+dependency_groups = ["tests", "dev"]
+commands = [[
+    "pytest", "-v", "--tb=short", "--basetemp={env_tmp_dir}", "--cov=anyquart_pydantic",
+    {replace = "posargs", default = [], extend = true},
+]]
+
+[tool.tox.env.style]
+description = "run all pre-commit hooks on all files"
+dependency_groups = ["pre-commit"]
+skip_install = true
+commands = [["pre-commit", "run", "--all-files"]]
+
+[tool.tox.env.typing]
+description = "run static type checkers"
+dependency_groups = ["tests", "typing"]
+commands = [
+    ["mypy"],
+]
+
