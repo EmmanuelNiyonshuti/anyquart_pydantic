@@ -20,8 +20,11 @@ pip install anyquart_pydantic
 
 ```python
 # app.py
-from anyquart import AnyQuart
 from pydantic import BaseModel
+
+from anyquart import AnyQuart
+from anyquart import jsonify
+
 from anyquart_pydantic import AnyQuartPydantic
 
 app = AnyQuart(__name__)
@@ -35,7 +38,7 @@ class User(BaseModel):
 
 @app.route("/users", methods=["POST"])
 async def create_user(user: User) -> User:
-    return user
+    return jsonify(user.model_dump()), 201
 ```
 
 Run it:
@@ -45,7 +48,19 @@ $ anyquart --app app:app run
 $ curl -X POST http://localhost:5000/users \
     -H "Content-Type: application/json" \
     -d '{"name": "Ada", "age": 37}'
+
+#response:
+{
+    "age": 37,
+    "name": "Ada"
+}
 ```
+
+## Contributing
+Contributions are very welcome.
+Tests can be run with [tox](https://tox.wiki/en/latest/tutorial/getting-started.html).
+To run tests on all environments in parallel `tox -p`, run test on specific environment
+`tox -e py315 -- tests`. You can also use uv `uv sync`.
 
 ## License
 MIT
