@@ -66,9 +66,7 @@ class AnyQuartPydantic:
             ResponseValidationError, self._handle_response_validation_error
         )
         # Shadow add_url_rule so every route registration is wrapped.
-        app.add_url_rule = self._wrap_add_url_rule(  # type: ignore[method-assign]
-            app, app.add_url_rule
-        )
+        app.add_url_rule = self._wrap_add_url_rule(app, app.add_url_rule)
         self._wrap_existing_view_functions(app)
 
     def _wrap_add_url_rule(

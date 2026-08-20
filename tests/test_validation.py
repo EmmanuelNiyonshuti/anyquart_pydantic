@@ -29,6 +29,10 @@ class Item(BaseModel):
     quantity: int
 
 
+class ItemOut(Item):
+    uid: str
+
+
 class Address(BaseModel):
     street: str
     city: str
@@ -134,12 +138,9 @@ def test_find_body_params_multiple_models() -> None:
     def handler(item: Item, address: Address) -> None: ...
 
     assert find_body_params(handler) == (
-        [
-            BodyParam("item", Item),
-            BodyParam("address", Address)
-        ],
-        []
-        )
+        [BodyParam("item", Item), BodyParam("address", Address)],
+        [],
+    )
 
 
 async def test_validate_request_body_single_coerces() -> None:
@@ -227,11 +228,35 @@ async def test_valid_body_is_injected(app: AnyQuart, client: ClientProtocol) -> 
         return jsonify(item.model_dump()), 201
 
     response: Response = await client.post(
-        "/items", json={"name": "widget", "quantity": "3"}
+        "/items", json={"name": "widget", "quantity": 3}
     )
 
     assert response.status_code == 201
     assert await response.get_json() == {"name": "widget", "quantity": 3}
+
+
+async def test_return_response_with_status_code(
+    app: AnyQuart, client: ClientProtocol
+) -> None:
+    @app.route("/items", methods=["POST"])
+    async def create_item(item: Item) -> ItemOut:
+        new_item = ItemOut(
+            uid="d817b99f-399b-4d46-a223-fc30accc149a",
+            name=item.name,
+            quantity=item.quantity,
+        )
+        return new_item, 201
+
+    response: Response = await client.post(
+        "/items", json={"name": "widget", "quantity": "3"}
+    )
+
+    assert response.status_code == 201
+    assert await response.get_json() == {
+        "uid": "d817b99f-399b-4d46-a223-fc30accc149a",
+        "name": "widget",
+        "quantity": 3,
+    }
 
 
 async def test_invalid_body_returns_422(app: AnyQuart, client: ClientProtocol) -> None:
@@ -243,9 +268,7 @@ async def test_invalid_body_returns_422(app: AnyQuart, client: ClientProtocol) -
 
     assert response.status_code == 422
     assert await response.get_json() == {
-        "detail": [
-            {"loc": ["quantity"], "msg": "Field required", "type": "missing"}
-        ]
+        "detail": [{"loc": ["quantity"], "msg": "Field required", "type": "missing"}]
     }
 
 
@@ -293,9 +316,7 @@ async def test_multiple_models_invalid_returns_422(
     async def create_order(item: Item, address: Address) -> Any:
         return jsonify(item.model_dump())
 
-    response: Response = await client.post(
-        "/orders", json={"item": {"name": "widget"}}
-    )
+    response: Response = await client.post("/orders", json={"item": {"name": "widget"}})
 
     assert response.status_code == 422
     assert await response.get_json() == {
@@ -380,6 +401,7 @@ async def test_error_payload_is_json_safe(
         "type": "greater_than",
     }
 
+
 def test_extension_init_app_is_idempotent() -> None:
     app = AnyQuart(__name__)
     AnyQuartPydantic(app)
@@ -409,17 +431,17 @@ async def test_extension_wraps_pre_registered_routes() -> None:
 
 
 async def test_validate_response_valid_coerces(
-    item_response_param: ResponseParam
-    ) -> None:
+    item_response_param: ResponseParam,
+) -> None:
     param = item_response_param
     result = validate_response({"name": "widget", "quantity": "3"}, [param])
 
-    assert result == {"name": "widget", "quantity": 3}
+    assert result == ({"name": "widget", "quantity": 3})
 
 
 async def test_validate_response_invalid_raises(
-    item_response_param: ResponseParam
-    ) -> None:
+    item_response_param: ResponseParam,
+) -> None:
     param = item_response_param
 
     with pytest.raises(ResponseValidationError) as excinfo:
@@ -431,8 +453,8 @@ async def test_validate_response_invalid_raises(
 
 
 async def test_validate_response_skips_response_object(
-    item_response_param: ResponseParam
-    ) -> None:
+    item_response_param: ResponseParam,
+) -> None:
     param = item_response_param
     response = Response(b'{"name": "widget"}')
     result = validate_response(response, [param])
@@ -440,9 +462,9 @@ async def test_validate_response_skips_response_object(
     assert result is response
 
 
-async def test_validate_response_skips_tuple(
-    item_response_param: ResponseParam
-    ) -> None:
+async def test_validate_response_with_status_code(
+    item_response_param: ResponseParam,
+) -> None:
     param = item_response_param
     result = validate_response(({"name": "widget", "quantity": 1}, 201), [param])
 
@@ -450,9 +472,10 @@ async def test_validate_response_skips_tuple(
 
 
 async def test_validate_response_skips_streams(
-    item_response_param: ResponseParam
-    ) -> None:
+    item_response_param: ResponseParam,
+) -> None:
     param = item_response_param
+
     async def stream() -> Any:
         yield {"name": "widget", "quantity": 1}
 
@@ -520,9 +543,7 @@ async def test_invalid_response_returns_500(
 
     assert response.status_code == 500
     assert await response.get_json() == {
-        "detail": [
-            {"loc": ["quantity"], "msg": "Field required", "type": "missing"}
-        ]
+        "detail": [{"loc": ["quantity"], "msg": "Field required", "type": "missing"}]
     }
 
 
