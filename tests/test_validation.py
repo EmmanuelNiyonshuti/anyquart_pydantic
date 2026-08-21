@@ -238,8 +238,8 @@ async def test_valid_body_is_injected(app: AnyQuart, client: ClientProtocol) -> 
 async def test_return_response_with_status_code(
     app: AnyQuart, client: ClientProtocol
 ) -> None:
-    @app.route("/items", methods=["POST"])
-    async def create_item(item: Item) -> ItemOut:
+    @app.route("/items", methods=["POST"])  # type: ignore[type-var]
+    async def create_item(item: Item) -> tuple[ItemOut, int]:
         new_item = ItemOut(
             uid="d817b99f-399b-4d46-a223-fc30accc149a",
             name=item.name,
