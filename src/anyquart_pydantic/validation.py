@@ -13,7 +13,7 @@ __all__ = [
 import inspect
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Protocol, get_args, get_type_hints
+from typing import Any, Protocol, get_args, get_origin, get_type_hints
 
 from anyquart import Response
 from anyquart.di import build_route_handler_dependency_map
@@ -100,6 +100,11 @@ def find_body_params(
         if name in dependency_parameters:
             continue
         if name == "return":
+            # for returning response with status code(pydantic_model, status_code)
+            if get_origin(annot) is tuple:
+                args = get_args(annot)
+                if len(args) == 2 and args[-1] is int:
+                    annot = args[0]
             models = tuple(_find_models(annot))
             if models:
                 response_params.append(
