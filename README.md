@@ -24,7 +24,6 @@ Here is a simple example:
 from pydantic import BaseModel
 
 from anyquart import AnyQuart
-from anyquart import jsonify
 
 from anyquart_pydantic import AnyQuartPydantic
 
@@ -51,6 +50,7 @@ async def create_user(user: UserIn) -> UserOut:
     #
     # and return a new registered user with a generated uuid primary key from the database
     new_user = UserOut(
+        email=user.email,
         uid="66b652e0-f114-46d7-b426-e0601233bab2",
         username=user.username
     )
