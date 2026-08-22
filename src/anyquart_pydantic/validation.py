@@ -13,7 +13,7 @@ __all__ = [
 import inspect
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Protocol, get_args, get_type_hints
+from typing import Any, Protocol, get_args, get_origin, get_type_hints
 
 from anyquart import Response
 from anyquart.di import build_route_handler_dependency_map
@@ -58,6 +58,7 @@ class ResponseParam:
     models: tuple[type[BaseModel], ...]
     type_adapter: TypeAdapter[Any]
 
+
 class RequestWithJson(Protocol):
     """The subset of a request API needed to read a JSON body."""
 
@@ -99,6 +100,11 @@ def find_body_params(
         if name in dependency_parameters:
             continue
         if name == "return":
+            # for returning response with status code(pydantic_model, status_code)
+            if get_origin(annot) is tuple:
+                args = get_args(annot)
+                if len(args) == 2 and args[-1] is int:
+                    annot = args[0]
             models = tuple(_find_models(annot))
             if models:
                 response_params.append(
@@ -109,6 +115,7 @@ def find_body_params(
 
     return body_params, response_params
 
+
 def _find_models(annotation: Any) -> list[type[BaseModel]]:
     """Collect the pydantic models nested in ``annotation``."""
     if isinstance(annotation, type) and issubclass(annotation, BaseModel):
@@ -117,6 +124,7 @@ def _find_models(annotation: Any) -> list[type[BaseModel]]:
     for argument in get_args(annotation):
         models.extend(_find_models(argument))
     return models
+
 
 async def validate_request_body(
     request: RequestWithJson, body_params: list[BodyParam]
@@ -176,8 +184,7 @@ async def validate_request_body(
 def _error_payload(
     detail: ErrorDetails, prefix: tuple[str, ...] = ()
 ) -> dict[str, Any]:
-    """Normalise a pydantic error detail to a JSON-serialisable dictionary.
-    """
+    """Normalise a pydantic error detail to a JSON-serialisable dictionary."""
     return {
         "loc": [*prefix, *detail["loc"]],
         "msg": detail["msg"],
@@ -185,9 +192,7 @@ def _error_payload(
     }
 
 
-def validate_response(
-    result: Any, response_params: list[ResponseParam]
-) -> Any:
+def validate_response(result: Any, response_params: list[ResponseParam]) -> Any:
     """Validate a handler's return value against the response parameters.
 
     Arguments:
@@ -196,17 +201,22 @@ def validate_response(
 
     Returns:
         A JSON-serialisable representation of ``result``. Manual responses
-        (e.g. ``Response`` objects, ``(body, status)`` tuples, streams) are
+        (e.g. ``Response`` objects, streams) are
         returned unchanged.
 
     Raises:
         ResponseValidationError: If ``result`` fails validation against any of
             the response models.
     """
-    if not response_params or isinstance(result, (Response, tuple)):
+    if not response_params or isinstance(result, (Response)):
         return result
     if inspect.isgenerator(result) or inspect.isasyncgen(result):
         return result
+
+    status = None
+    if isinstance(result, tuple):
+        if isinstance(result[-1], int):
+            result, status = result
 
     for response_param in response_params:
         try:
@@ -216,4 +226,7 @@ def validate_response(
                 [_error_payload(detail) for detail in error.errors()]
             ) from error
         result = response_param.type_adapter.dump_python(validated, mode="json")
-    return result
+    if status is None:
+        return result
+    else:
+        return result, status

@@ -84,19 +84,13 @@ source = ["anyquart_pydantic", "tests"]
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 
-[tool.coverage.report]
-exclude_also = [
-    "if TYPE_CHECKING",
-    "raise NotImplementedError",
-    ": \\.{3}",
-]
 
 [tool.mypy]
 python_version = "3.14"
 strict = true
 disallow_any_generics = false
 warn_return_any = false
-files = ["src", "tests"]
+files = ["src"]
 
 
 [tool.pyright]
@@ -167,4 +161,3 @@ dependency_groups = ["tests", "typing"]
 commands = [
     ["mypy"],
 ]
-

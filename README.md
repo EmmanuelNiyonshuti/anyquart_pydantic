@@ -18,6 +18,7 @@ pip install anyquart_pydantic
 
 ## Usage
 
+Here is a simple example:
 ```python
 # app.py
 from pydantic import BaseModel
@@ -32,27 +33,45 @@ AnyQuartPydantic(app)
 
 
 class User(BaseModel):
-    name: str
-    age: int
+    email: str
 
+class UserIn(User):
+    password: str
+    username: str | None = None
+
+class UserOut(User):
+    uid: str
+    username: str
 
 @app.route("/users", methods=["POST"])
-async def create_user(user: User) -> User:
-    return jsonify(user.model_dump()), 201
+async def create_user(user: UserIn) -> UserOut:
+    if user.username is None:
+        user.username = user.email.split("@")[0]
+    # do other stuffs(e.g: save to the database)
+    #
+    # and return a new registered user with a generated uuid primary key from the database
+    new_user = UserOut(
+        uid="66b652e0-f114-46d7-b426-e0601233bab2",
+        username=user.username
+    )
+    return new_user, 201
 ```
 
-Run it:
+Run the application:
 
 ```bash
 $ anyquart --app app:app run
+```
+send a request:
+```bash
 $ curl -X POST http://localhost:5000/users \
     -H "Content-Type: application/json" \
-    -d '{"name": "Ada", "age": 37}'
+    -d '{"email": "foo@bar.com", "password": "super_secret!"}'
 
 #response:
 {
-    "age": 37,
-    "name": "Ada"
+    "uid": "66b652e0-f114-46d7-b426-e0601233bab2",
+    "username": "foo"
 }
 ```
 
