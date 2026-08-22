@@ -1,8 +1,8 @@
-## Version 0.1.0
+## Version 0.2.0
 
-Unreleased
+Released 2026-08-22
 
-- Added status codes to route handler's response validation.
+- Added status codes to route handler's response validation(#2).
 
 ## Version 0.1.0
 
