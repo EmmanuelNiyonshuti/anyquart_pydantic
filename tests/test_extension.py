@@ -43,9 +43,28 @@ def test_init_app_registers_error_handlers(app: AnyQuart) -> None:
 
     assert handlers[RequestValidationError] == extension._handle_validation_error
     assert (
-        handlers[ResponseValidationError]
-        == extension._handle_response_validation_error
+        handlers[ResponseValidationError] == extension._handle_response_validation_error
     )
+
+
+async def test_initialize_extension_via_app_factory() -> None:
+    anyquart_pydantic = AnyQuartPydantic()
+
+    def create_app() -> AnyQuart:
+        app = AnyQuart(__name__)
+        anyquart_pydantic.init_app(app)
+        return app
+
+    app = create_app()
+
+    @app.get("/")
+    async def home():
+        return {"msg": "Hello"}
+
+    client = app.test_client()
+    response = await client.get("/")
+    assert response.status_code == 200
+    assert await response.json == {"msg": "Hello"}
 
 
 def test_init_app_is_idempotent(app: AnyQuart) -> None:
@@ -165,9 +184,7 @@ async def test_error_handlers_are_active(
 
     assert bad_response.status_code == 500
     assert await bad_response.get_json() == {
-        "detail": [
-            {"loc": ["quantity"], "msg": "Field required", "type": "missing"}
-        ]
+        "detail": [{"loc": ["quantity"], "msg": "Field required", "type": "missing"}]
     }
 
 

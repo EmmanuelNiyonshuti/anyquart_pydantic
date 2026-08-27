@@ -32,18 +32,33 @@ class AnyQuartPydantic:
         app = AnyQuart(__name__)
         AnyQuartPydantic(app)
 
+    or Register extension via application factory:
+
+        anyquart_pydantic = AnyQuartPydantic()
+
+        def create_app() -> AnyQuart:
+            app = AnyQuart(__name__)
+            anyquart_pydantic.init_app(app)
+            return app
+
     Example:
         .. code-block:: python
 
             from pydantic import BaseModel
 
             class User(BaseModel):
-                name: str
-                age: int
+                email: str
+
+            class UserIn(User):
+                password: str
+
+            class UserOut(User):
+                id: str
 
             @app.route("/users", methods=["POST"])
-            async def create_user(user: User):
-                return {"name": user.name, "age": user.age}
+            async def create_user(user: UserIn) -> UserOut:
+                new_user = UserOut(**user)
+                return new_user
     """
 
     def __init__(self, app: AnyQuart | None = None) -> None:
@@ -66,7 +81,7 @@ class AnyQuartPydantic:
             ResponseValidationError, self._handle_response_validation_error
         )
         # Shadow add_url_rule so every route registration is wrapped.
-        app.add_url_rule = self._wrap_add_url_rule(app, app.add_url_rule) # type: ignore[method-assign]
+        app.add_url_rule = self._wrap_add_url_rule(app, app.add_url_rule)  # type: ignore[method-assign]
         self._wrap_existing_view_functions(app)
 
     def _wrap_add_url_rule(
