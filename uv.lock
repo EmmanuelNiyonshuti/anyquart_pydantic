@@ -20,6 +20,7 @@ name = "anyio"
 version = "4.15.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "exceptiongroup", marker = "python_full_version < '3.11'" },
     { name = "idna" },
     { name = "typing-extensions", marker = "python_full_version < '3.15'" },
 ]
@@ -99,7 +100,7 @@ pre-commit = [
 ]
 tests = [
     { name = "hypothesis" },
-    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "pytest" },
     { name = "pytest-cov" },
 ]
 typing = [
