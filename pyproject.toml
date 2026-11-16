@@ -44,7 +44,7 @@ anyquart_pydantic = "anyquart_pydantic.cli:main"
 
 [dependency-groups]
 dev = [
-    "trio==0.34.0",
+    "trio==0.35.0",
     "ruff",
     "tox",
     "tox-uv",
